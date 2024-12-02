@@ -1,0 +1,134 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Datasheet Template
+
+Two datasets where combined in this project: - Customer Endpoint Hourly Dataset - Created by National Grid. - Weather Dataset - Added to Kaggle with no notes on the original source. Kaggle link: <https://www.kaggle.com/datasets/pythonafroz/solar-panel-energy-generation-data>
+
+As far as you can, complete the model datasheet. If you have got the data from the internet, you may not have all the information you need, but make sure you include all the information you do have.
+
+## Motivation
+
+-   The solar production dataset of this dataset was created by the national grid for a substation anylisis project.
+-   Weather data has no source.
+
+## Composition
+
+-   What do the instances that comprise the dataset represent (e.g., documents, photos, people, countries)?
+
+-   Both datasets are made up of integer and date and categorical data.
+
+-   Customer Endpoint Solar Power Generation Data -2 variables Real Power Generation (kW) - integer location Date time id field.
+
+Weather Data set contains 33 variables This is broken down to: - 1 Location Date Time Id variable that is a combined variable of 3 separate columns in the raw datasets. - 2 Categorical Variables - Showing a direction, both variables are the same with 11 direction options. These two variables have been converted to radians. - All other variables are number's that have been converted to python integer type for computational ease. - No confidential data in this dataset only publicly available data.
+
+### Weather Data Variables
+
+1.  Date
+2.  Time
+3.  TempOut
+4.  HiTemp - Cross correlated with TempOut so removed from fitting dataset
+5.  LowTemp - Cross correlated with TempOut so removed from fitting dataset
+6.  OutHum
+7.  DewPt
+8.  WindSpeed
+9.  WindDir - Categorical
+10. WindRun
+11. HiSpeed
+12. HiDir - Categorical
+13. WindChill
+14. HeatIndex
+15. THWIndex
+16. THSWIndex - This column had an error that replaced the whole column with nan so removed
+17. Bar
+18. Rain
+19. RainRate
+20. SolarRad
+21. SolarEnergy
+22. HiSolarRad
+23. HeatD-D
+24. CoolD-D
+25. InTemp
+26. InHum
+27. InDew
+28. InHeat
+29. InEMC
+30. InAirDensity
+31. ET
+32. WindSamp
+33. WindTx
+34. ISSRecept
+35. ArcInt
+
+## Collection process
+
+-   The solar generation data was collected in groups of 1min, 10 mins and 1hour over the full 24hs a day every day for the year 2013-14. THis dataset covered 10 locations. In this project I have used the 1 hour calculations.
+-   The weather dataset covers every 30 mins 24hours a day for the same 2013-2014 period. This dataset covered 5 substation locations. In the data joining process only rows with complete matching substaintion , Date and Time by the 24h clock
+
+## Preprocessing/cleaning/labelling
+
+### Weather dataset
+
+```{python eval = false}
+weather_data_clean = weather_data[weather_data['Site'].isin(['YMCA', 'Maple Drive East', 'Forest Road'])]
+weather_data_clean['Date'] = pd.to_datetime(weather_data_clean['Date'],format='%d/%m/%Y' )
+weather_data_clean['Time'] = pd.to_datetime(weather_data_clean['Time'])
+weather_data_clean['Time'] = weather_data_clean['Time'].dt.time
+weather_data_clean['Datetime'] = pd.to_datetime(weather_data_clean['Date'].astype(str) + ' '+ weather_data_clean['Time'].astype(str))
+weather_data_clean['Site Date Time ID'] = weather_data_clean['Datetime'].astype(str) + weather_data_clean['Site']
+
+func_dir(weather_data_clean['WindDir'])
+func_dir(weather_data_clean['HiDir'])
+weather_data_clean = weather_data_clean.drop(['HiTemp', 'LowTemp'],axis=1)
+
+
+```
+
+-   Filter out the substations that are not in both datasets.
+
+-   Covert the date column into the same format.
+
+-   Convert the time column to the 24hour clock
+
+-   Converting substation name, date and time field into a unique id to be used in the merge between the power dataset and weather dataset.
+
+-   Remove the 'HiTemp' and 'LowTemp' as these datapoints are represented in the column 'TempOut'.
+
+```{python, eval=false}
+def func_dir(d):
+    for i in range(17):
+        a = ['WNW', 'NW', 'W', 'N', 'WSW', 'NNW', 'NNE', 'SW', 'SSW', 'NE',
+       '---', 'ENE', 'SSE', 'S', 'E', 'SE', 'ESE']
+        b = [5.11,5.505,4.714,4.324,0.000,	0.390,	5.895,0,3.933, 0.790, 2.752,	3.543,	3.143,2.362, 1.571, 1.181,	1.961]
+        d.mask(d == a[i],b[i], inplace=True)
+        i = i+1
+  
+```
+
+The function above shows the process to the replace the two direction based categorical variables with radian values.
+
+### Customer Endpoint Dataset 
+
+-   the output variable real power generation field can only be a positive number.a few values are negative show in the boxplot in figure 1. these are likely to be error values so they have been replaced to 0.
+
+![Figure 1: Error values in output variable](P_gen_error_boxplot.png){width="382"}
+
+-   Converting substation name, date and time field into a unique id to be used in the merge between the power dataset and weather dataset.
+
+```{python, eval = FALSE}
+customer_end_data_clean['Site Date Time ID'] = customer_end_data_clean['datetime'].astype(str) + customer_end_data_clean['Substation']
+
+```
+
+-   Both datasets are public available dataset has been prepossessed.
+
+## Distribution
+
+The data is freely available on Kaggle and the UK Government website for the National Power Grid. <https://www.kaggle.com/datasets/pythonafroz/solar-panel-energy-generation-data>
+
+## Maintenance
+
+-   This dataset is not maintained so will not be increasing in size.
